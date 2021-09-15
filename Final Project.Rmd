@@ -1,0 +1,191 @@
+---
+title: "Final Project"
+author: "John Kaspers"
+date: "11/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1 = Mug no baking soda
+2 = Mug 1/8 tsp baking soda
+3 = Mug 1/4 tsp baking soda
+4 = Pint 0 tsp baking soda
+5 = Pint 1/8 tsp baking soda
+6 = Pint 1/4 tsp baking soda
+
+## Randomization
+```{r}
+sample(1:6)
+```
+<hr>
+```{r}
+entries <- c(0, 0.3, 1.3, 0, 0.1, 0, 0.3, 1.1, 0, 0.2, 1, 1.1, 2.2, 1.2, 1.1, 2, 0.8, 1.9, 0.6, 0.6, 2.7, 1.6, 2.4, 2.2, 1.8, 1.3, 2.7, 2.1, 2.5, 2.5)
+length(entries)
+container <- as.factor(c("Mug", "Mug", "Mug", "Mug", "Mug", "Pint", "Pint", "Pint", "Pint", "Pint", "Mug", "Mug", "Mug", "Mug", "Mug", "Pint", "Pint", "Pint", "Pint", "Pint", "Mug", "Mug", "Mug", "Mug", "Mug", "Pint", "Pint", "Pint", "Pint", "Pint"))
+length(container)
+bakeSodaAmount <- as.factor(c(rep("0 tsp", 10), rep("1/8 tsp", 10), rep("1/4 tsp", 10)))
+cbind(entries, container, bakeSodaAmount)
+length(bakeSodaAmount)
+
+twoway <- aov(entries~bakeSodaAmount+container+bakeSodaAmount*container)
+summary(twoway)
+
+#Diagnostics
+plot(container, entries, xlab="Container", ylab="Height Difference")
+plot(bakeSodaAmount, entries, xlab="Baking Soda Amount", ylab="Height Difference")
+```
+
+
+```{r}
+alpha=0.05
+a=3#number of levels of a
+b=2#number of levels of b
+sigsq=0.295
+
+#For Factor A=AmountBakingSoda
+n=18:35
+D=0.5#desired difference in means to detect with prob 1-beta
+Fcrit=qf(1-alpha,a-1,a*b*(n-1))#value at which we reject H0
+lam=n*b*(D^2)/(2*sigsq)
+beta=pf(Fcrit,a-1,a*b*(n-1),ncp=lam)
+power=1-beta
+nforA=cbind(n,Fcrit,beta,power)#output for A
+nforA
+
+#For Factor B=ContainerType
+n=18:35
+D=0.5#desired difference in means to detect with prob 1-beta
+Fcrit=qf(1-alpha,b-1,a*b*(n-1))#value at which we reject H0
+lam=n*a*(D^2)/(2*sigsq)
+beta=pf(Fcrit,b-1,a*b*(n-1),ncp=lam)
+power=1-beta
+nforB=cbind(n,Fcrit,beta,power)#output for B
+nforB
+```
+
+<hr>
+
+## Two Factor Design
+```{r}
+#Specify means, sigma and replicates
+#You will have to make appropriate changes for your experiment
+
+set.seed(789)
+
+n = 114 #replicates
+a = 3 #Factor a
+b = 2 #Factor b
+sigma = sqrt(0.295) #value of sigma
+mean11 = 0.34 #mean for treatment-combination 11
+mean12 = 0.32 #mean for treatment-combination 12
+mean21 = 1.32 #mean for treatment-combination 21
+mean22 = 1.18 #mean for treatment-combination 22
+mean31 = 2.14 #mean for treatment-combination 31
+mean32 = 2.22 #mean for treatment-combination 32
+
+#Generate the data
+y11 = mean11+rnorm(n, 0, sigma); y11
+y12 = mean12+rnorm(n, 0, sigma); y12
+y21 = mean21+rnorm(n, 0, sigma); y21
+y22 = mean22+rnorm(n, 0, sigma); y22
+y31 = mean31+rnorm(n, 0, sigma); y31
+y32 = mean32+rnorm(n, 0, sigma); y32
+
+#Create data table for ANOVA
+yij = c(y11, y12, y21, y22, y31, y32)
+
+fa=as.factor(c(rep(1,b*n),rep(2,b*n),rep(3,b*n)))
+fb=as.factor(rep(c(rep(1,n),rep(2,n)), a))
+
+
+#Remember to check your data to make sure you have generated the data you desire
+head(cbind(yij,fa,fb))
+
+summary(yij)
+```
+
+<hr>
+
+```{r}
+## Two factor
+
+#Exploratory plots
+par(mfrow=c(1,3))
+plot(fa,yij, xlab="Amount of Baking Soda",ylab="Height Difference")
+plot(fb,yij,xlab="Container Type",ylab="Height Difference")
+interaction.plot(fa, fb, yij, xlab="A",ylab="Height Difference", trace.label = "Container Type", fixed = T)
+
+par(mfrow=c(1,1))
+
+#anova
+twoway=aov(yij~fa+fb+fa*fb)
+summary(twoway)#ANOVA 
+
+#Residual analysis
+fits=twoway$fitted
+res=twoway$residuals
+par(mfrow=c(2,2))
+qqnorm(res)
+qqline(res)
+stripchart(res~fa,vertical=T,xlab="Amount of Baking Soda",ylab="Residuals", main="Amount Baking Soda")
+stripchart(res~fb,vertical=T,xlab="Container Type",ylab="Residuals", main="Container Type")
+plot(fits,res,xlab="Y-hat",ylab="Residuals", main="Residuals vs Fitted")
+
+
+```
+<hr>
+
+#Exploratory
+
+```{r}
+entries <- c(0, 0.3, 1.3, 0, 0.1, 0, 0.3, 1.1, 0, 0.2, 1, 1.1, 2.2, 1.2, 1.1, 2, 0.8, 1.9, 0.6, 0.6, 2.7, 1.6, 2.4, 2.2, 1.8, 1.3, 2.7, 2.1, 2.5, 2.5)
+length(entries)
+```
+<hr>
+```{r}
+container <- as.factor(c("Mug", "Mug", "Mug", "Mug", "Mug", "Pint", "Pint", "Pint", "Pint", "Pint", "Mug", "Mug", "Mug", "Mug", "Mug", "Pint", "Pint", "Pint", "Pint", "Pint", "Mug", "Mug", "Mug", "Mug", "Mug", "Pint", "Pint", "Pint", "Pint", "Pint"))
+length(container)
+```
+<hr>
+```{r}
+bakeSodaAmount <- as.factor(c(rep("0 tsp", 10), rep("1/8 tsp", 10), rep("1/4 tsp", 10)))
+cbind(entries, container, bakeSodaAmount)
+```
+
+<hr>
+```{r}
+plot(container, entries, xlab="Container", ylab="Height Difference")
+
+twoway <- aov(entries~bakeSodaAmount+container+bakeSodaAmount*container)
+summary(twoway)
+
+plot(container, entries, xlab="Container",ylab="Height Difference")
+plot(bakeSodaAmount, entries,xlab="Baking Soda Amount",ylab="Height Difference")
+
+stripchart(entries~container+bakeSodaAmount,vertical=T,xlab="container+bakeSodaAmount", cex.lab=1, pch=19,cex.axis=0.7)
+
+#Plotting interaction
+interaction.plot(container, bakeSodaAmount, entries)
+interaction.plot(bakeSodaAmount,container,entries)
+
+```
+
+<hr>
+
+#Diagnostic Plots
+```{r}
+fits=twoway$fitted
+res=twoway$residuals
+par(mfrow=c(2,2))
+qqnorm(res)
+qqline(res)
+stripchart(res~container,vertical=T,xlab="A",ylab="Residuals", main="Container")
+stripchart(res~bakeSodaAmount,vertical=T,xlab="B",ylab="Residuals", main="Baking Soda Amount")
+plot(fits, res, xlab="Y-hat", ylab="Residuals", main="Residuals vs Fitted")
+
+par(mfrow=c(1,1))
+plot.design(entries~container+bakeSodaAmount)
+```
